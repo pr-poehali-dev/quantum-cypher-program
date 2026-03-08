@@ -1,4 +1,31 @@
+import { useState } from 'react';
+
+const SEND_EMAIL_URL = 'https://functions.poehali.dev/ddf2cccc-12d1-427d-a3d2-d757a1eb9b68';
+
 export default function Index() {
+  const [form, setForm] = useState({ name: '', email: '', message: '' });
+  const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setStatus('loading');
+    try {
+      const res = await fetch(SEND_EMAIL_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(form),
+      });
+      if (res.ok) {
+        setStatus('success');
+        setForm({ name: '', email: '', message: '' });
+      } else {
+        setStatus('error');
+      }
+    } catch {
+      setStatus('error');
+    }
+  };
+
   return (
     <main className="min-h-screen bg-white">
       {/* Navigation */}
@@ -167,7 +194,7 @@ export default function Index() {
               </div>
             </div>
             <div>
-              <form className="space-y-6">
+              <form className="space-y-6" onSubmit={handleSubmit}>
                 <div>
                   <label htmlFor="name" className="block text-sm uppercase tracking-widest mb-2">
                     Имя
@@ -175,6 +202,9 @@ export default function Index() {
                   <input
                     type="text"
                     id="name"
+                    required
+                    value={form.name}
+                    onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
                     className="w-full bg-transparent border-b-2 border-white py-2 px-0 focus:outline-none focus:border-black placeholder-white/50"
                     placeholder="Ваше имя"
                   />
@@ -186,6 +216,8 @@ export default function Index() {
                   <input
                     type="email"
                     id="email"
+                    value={form.email}
+                    onChange={e => setForm(f => ({ ...f, email: e.target.value }))}
                     className="w-full bg-transparent border-b-2 border-white py-2 px-0 focus:outline-none focus:border-black placeholder-white/50"
                     placeholder="Ваш email"
                   />
@@ -197,15 +229,25 @@ export default function Index() {
                   <textarea
                     id="message"
                     rows={4}
+                    required
+                    value={form.message}
+                    onChange={e => setForm(f => ({ ...f, message: e.target.value }))}
                     className="w-full bg-transparent border-b-2 border-white py-2 px-0 focus:outline-none focus:border-black placeholder-white/50 resize-none"
                     placeholder="Расскажите о своём проекте и задаче"
                   />
                 </div>
+                {status === 'success' && (
+                  <p className="text-white font-bold text-center">Заявка отправлена! Свяжемся скоро.</p>
+                )}
+                {status === 'error' && (
+                  <p className="text-white/70 text-center">Что-то пошло не так. Попробуйте ещё раз.</p>
+                )}
                 <button
                   type="submit"
-                  className="w-full bg-white text-red-600 py-4 font-bold uppercase tracking-widest hover:bg-black hover:text-white transition-colors duration-300"
+                  disabled={status === 'loading'}
+                  className="w-full bg-white text-red-600 py-4 font-bold uppercase tracking-widest hover:bg-black hover:text-white transition-colors duration-300 disabled:opacity-50"
                 >
-                  Отправить заявку
+                  {status === 'loading' ? 'Отправляем...' : 'Отправить заявку'}
                 </button>
               </form>
             </div>
